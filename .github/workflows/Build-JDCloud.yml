@@ -184,11 +184,15 @@ jobs:
       run: |
         cd openwrt
         make defconfig
+        # 关闭多余无线驱动（qualcommax 的 ath11k 由 DEVICE_PACKAGES 强制 y，不受影响）
         if [[ ! "${{matrix.target}}" =~ (amlogic_meson8b|armsr_armv8|bcm27xx_*|rockchip_armv8|sunxi_*|x86_*|siflower_*) ]]; then
         sed -n '/# Wireless Drivers/,/# end of Wireless Drivers/p' .config | sed -e 's/=m/=n/' >>.config
-        sed -i "s/\(kmod-qca.*\)=m/\1=n/" .config
-        make defconfig
         fi
+        # kmod-qca* 只对非 qualcommax 关闭：NSS 平台（ipq60xx）必须保留全套加速模块
+        if [[ ! "${{matrix.target}}" =~ (amlogic_meson8b|armsr_armv8|bcm27xx_*|rockchip_armv8|sunxi_*|x86_*|siflower_*|qualcommax_*) ]]; then
+        sed -i "s/\(kmod-qca.*\)=m/\1=n/" .config
+        fi
+        make defconfig
         cat .config
 
     - name: Verify single device
@@ -198,8 +202,14 @@ jobs:
         echo "选中设备数: $n"
         grep -E '^CONFIG_TARGET_qualcommax_ipq60xx_DEVICE_.*=y' .config || true
         if [ "$n" != "1" ]; then echo "::error::设备数不为 1，配置有问题"; exit 1; fi
-        for p in luci-app-wolultra luci-app-adguardhome luci-app-broadbandacc luci-app-store luci-app-timedreboot luci-app-timewol adguardhome cloudflared; do
-          grep -qE "^CONFIG_PACKAGE_$p=y" .config && echo "  [y] $p" || echo "  [ ] $p 未选中"
+        for p in luci-app-wolultra luci-app-store luci-app-timedreboot luci-app-timewol luci-app-sqm \
+                 kmod-usb-net-cdc-ncm kmod-usb-net-rndis kmod-tls kmod-bonding \
+                 kmod-qca-nss-drv kmod-qca-nss-ecm kmod-qca-nss-drv-qdisc sqm-scripts-nss; do
+          grep -qE "^CONFIG_PACKAGE_$p=y" .config && echo "  [y] $p" || echo "  [!] $p 未选中"
+        done
+        echo "--- 应被排除的 ---"
+        for p in adguardhome cloudflared luci-app-broadbandacc luci-app-autoreboot; do
+          grep -qE "^CONFIG_PACKAGE_$p=y" .config && echo "  [!] $p 仍被选入" || echo "  [ok] $p 已排除"
         done
         grep -E '^CONFIG_TARGET_(qualcommax_ipq60xx_DEVICE|MULTI_PROFILE|ALL_PROFILES)' .config || true
 
