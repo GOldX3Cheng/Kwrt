@@ -33,16 +33,17 @@ rm -rf "$tmpdir"
 [ -f package/luci-app-wolultra/Makefile ] && echo "[OK] luci-app-wolultra 已就位" || { echo "[FAIL] luci-app-wolultra 缺失"; exit 1; }
 
 # ==================================================
-# 修 op-packages 历史遗留：luci-app-adguardhome 的 patches/ 整目录
-# 其改动（Makefile 的 include/LUCI_DEPENDS、init 脚本的 EXTRA_COMMANDS/do_redirect 等）
-# 均已并入仓库文件；补丁 00 因构建目录无 Makefile、01 因 init 脚本已变而必然失败
-# ==================================================
-if [ -d feeds/kiddin9/luci-app-adguardhome/patches ]; then
-  rm -rf feeds/kiddin9/luci-app-adguardhome/patches
-  echo "[OK] 已移除 luci-app-adguardhome 的全部失效补丁（仓库文件已含其改动）"
+# luci-app-adguardhome 改用 luci 源版本
+# 原因：kiddin9 源那份自带 13 个历史补丁（00_makefile 因构建目录无 Makefile、
+# 01_init 因 init 脚本已变动而必然打不上），而 luci 源里的官方版本无补丁、依赖正确
+if [ -d feeds/luci/applications/luci-app-adguardhome ]; then
+  rm -rf package/feeds/kiddin9/luci-app-adguardhome
+  rm -rf feeds/kiddin9/luci-app-adguardhome
+  ./scripts/feeds install -f -p luci luci-app-adguardhome
+  echo "[OK] luci-app-adguardhome 已切换为 luci 源版本（无历史补丁）"
+  ls -l package/feeds/luci/luci-app-adguardhome || true
 fi
 
-# ==================================================
 # 精简 Kwrt 自带 DEFAULT_PACKAGES：去掉 upnp / 风扇 / wifi 历史
 # （与当前 immortalwrt 那版保持一致；advancedplus/quickstart 等 UI 外壳保留）
 # ==================================================
