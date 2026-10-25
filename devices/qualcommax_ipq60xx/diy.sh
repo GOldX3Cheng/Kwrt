@@ -33,13 +33,13 @@ rm -rf "$tmpdir"
 [ -f package/luci-app-wolultra/Makefile ] && echo "[OK] luci-app-wolultra 已就位" || { echo "[FAIL] luci-app-wolultra 缺失"; exit 1; }
 
 # ==================================================
-# 修 op-packages 历史遗留：luci-app-adguardhome 的 00_makefile.patch
-# 其改动（include $(TOPDIR)/feeds/luci/luci.mk、LUCI_DEPENDS）已在 Makefile 内，
-# 而 LuCI 包构建目录里没有 Makefile，补丁必然 "No file to patch" 导致编译中断
+# 修 op-packages 历史遗留：luci-app-adguardhome 的 patches/ 整目录
+# 其改动（Makefile 的 include/LUCI_DEPENDS、init 脚本的 EXTRA_COMMANDS/do_redirect 等）
+# 均已并入仓库文件；补丁 00 因构建目录无 Makefile、01 因 init 脚本已变而必然失败
 # ==================================================
-if [ -f feeds/kiddin9/luci-app-adguardhome/patches/00_makefile.patch ]; then
-  rm -f feeds/kiddin9/luci-app-adguardhome/patches/00_makefile.patch
-  echo "[OK] 已移除 luci-app-adguardhome 的失效补丁"
+if [ -d feeds/kiddin9/luci-app-adguardhome/patches ]; then
+  rm -rf feeds/kiddin9/luci-app-adguardhome/patches
+  echo "[OK] 已移除 luci-app-adguardhome 的全部失效补丁（仓库文件已含其改动）"
 fi
 
 # ==================================================
