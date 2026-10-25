@@ -33,6 +33,16 @@ rm -rf "$tmpdir"
 [ -f package/luci-app-wolultra/Makefile ] && echo "[OK] luci-app-wolultra 已就位" || { echo "[FAIL] luci-app-wolultra 缺失"; exit 1; }
 
 # ==================================================
+# 修 op-packages 历史遗留：luci-app-adguardhome 的 00_makefile.patch
+# 其改动（include $(TOPDIR)/feeds/luci/luci.mk、LUCI_DEPENDS）已在 Makefile 内，
+# 而 LuCI 包构建目录里没有 Makefile，补丁必然 "No file to patch" 导致编译中断
+# ==================================================
+if [ -f feeds/kiddin9/luci-app-adguardhome/patches/00_makefile.patch ]; then
+  rm -f feeds/kiddin9/luci-app-adguardhome/patches/00_makefile.patch
+  echo "[OK] 已移除 luci-app-adguardhome 的失效补丁"
+fi
+
+# ==================================================
 # 精简 Kwrt 自带 DEFAULT_PACKAGES：去掉 upnp / 风扇 / wifi 历史
 # （与当前 immortalwrt 那版保持一致；advancedplus/quickstart 等 UI 外壳保留）
 # ==================================================
