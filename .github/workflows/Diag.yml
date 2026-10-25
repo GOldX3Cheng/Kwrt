@@ -208,3 +208,12 @@ jobs:
         grep -E "^CONFIG_(aarch64|x86_64|PACKAGE_luci-app-store|PACKAGE_mount-utils)" .config
         echo "===== 是否有 EXCLUDE/隐藏 ====="
         grep -rn "luci-app-store" tmp/.config-package.in | head -10
+    - name: Compile target packages only
+      run: |
+        cd openwrt
+        for p in luci-app-adguardhome luci-app-store luci-app-broadbandacc luci-app-timedreboot luci-app-timewol luci-app-wolultra; do
+          echo "######## $p ########"
+          out=$(make package/feeds/kiddin9/$p/compile package/$p/compile V=s 2>&1 || true)
+          echo "$out" | tail -12
+          if echo "$out" | grep -qE "ERROR: |Error 1$|Patch failed"; then echo "::error::$p FAILED"; else echo "OK $p"; fi
+        done
